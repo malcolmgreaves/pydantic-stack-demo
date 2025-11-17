@@ -115,6 +115,7 @@ async def deep_research_durable(query: str):
         'name': 'deep_research_durable',
         'enable_otlp': True,
         'conductor_key': os.environ.get('DBOS_CONDUCTOR_KEY', None),
+        'system_database_url': os.environ.get('DBOS_DB_URL', 'postgresql://postgres@localhost:5432/dbos'),
     }
     DBOS(config=config)
     DBOS.launch()

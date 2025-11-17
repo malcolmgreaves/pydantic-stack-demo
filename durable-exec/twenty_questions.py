@@ -1,6 +1,8 @@
 import asyncio
+import random
 from dataclasses import dataclass
 from enum import StrEnum
+from pathlib import Path
 
 import logfire
 from pydantic_ai import Agent, AgentRunResult, RunContext, UsageLimits
@@ -76,5 +78,21 @@ async def play(answer: str) -> AgentRunResult[str]:
     return result
 
 
+def select_from(vocabulary: Path) -> str:
+    vocab_words: list[str] = []
+    with vocabulary.open('rt') as rt:
+        for line in rt:
+            vocab_words.append(line.strip())
+    return random.choice(vocab_words)
+
+
+REPO_ROOT: Path = Path(__file__).parent.parent
+
+
 if __name__ == '__main__':
-    asyncio.run(play('potato'))
+    try:
+        answer: str = select_from(REPO_ROOT / 'vocab.txt')
+    except Exception as e:
+        print(f'ERROR: Could not read from vocabulary file ({e}) -- using hardcoded example answer.')
+        answer = 'potato'
+    asyncio.run(play(answer))

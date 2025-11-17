@@ -4,6 +4,7 @@ from enum import StrEnum
 
 import logfire
 from pydantic_ai import Agent, AgentRunResult, RunContext, UsageLimits
+from pydantic_ai.exceptions import UsageLimitExceeded
 
 logfire.configure(send_to_logfire='if-token-present', console=False)
 logfire.instrument_pydantic_ai()
@@ -64,8 +65,14 @@ async def ask_question(ctx: RunContext[GameState], question: str) -> Answer:
 
 async def play(answer: str) -> AgentRunResult[str]:
     state = GameState(answer=answer)
-    result = await questioner_agent.run('start', deps=state, usage_limits=UsageLimits(request_limit=25))
-    print(f'After {len(result.all_messages()) / 2}, the answer is: {result.output}')
+    try:
+        result = await questioner_agent.run('start', deps=state, usage_limits=UsageLimits(request_limit=25))
+        print(f'After {len(result.all_messages()) / 2}, the answer is: {result.output}')
+    except UsageLimitExceeded as e:
+        msg = f"ERROR: Exceeded request limit {e} -- answer was: '{answer}'"
+        print(f"ERROR: Exceeded request limit {e} -- answer was: '{answer}'")
+        raise RuntimeError(msg) from e
+
     return result
 
 
